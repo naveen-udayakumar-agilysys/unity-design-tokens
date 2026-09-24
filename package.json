@@ -1,0 +1,13 @@
+{
+  "name": "unity-design-tokens",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node config.js",
+    "preview": "node generate-preview.js",
+    "all": "node config.js && node generate-preview.js"
+  },
+  "dependencies": {
+    "style-dictionary": "^4.0.0"
+  }
+}
