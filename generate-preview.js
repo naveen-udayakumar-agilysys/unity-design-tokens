@@ -76,22 +76,22 @@ function humanize(s) {
 // ---------- categorize tokens ----------
 
 const categories = {
-  colorRamps: [],      // colors-{hue}-{step} (numeric step, no alpha)
-  alphaColors: [],     // colors-{hue}-alpha-{n}
-  semanticColors: [],  // modes-*
-  gradients: [],       // paint-styles-*
-  textStyles: [],      // text-styles-*
-  typescale: [],       // typescale-*
-  shadows: [],         // effect-styles-shadow-*
-  spacing: [],         // spacing-and-size-*
-  borderRadius: [],    // border-and-radius-radius-*
-  borderWeights: [],   // border-and-radius-border-weight-*
-  borderShadows: [],   // border-and-radius-shadow-*
-  iconSizes: [],       // icon-size-*
-  brands: [],          // brands-*
-  components: [],      // components-*
-  typographyVars: [],  // typography-font-*
-  colorsOther: [],     // colors-* that don't match ramps or alpha
+  colorRamps: [],
+  alphaColors: [],
+  semanticColors: [],
+  gradients: [],
+  textStyles: [],
+  typescale: [],
+  shadows: [],
+  spacing: [],
+  borderRadius: [],
+  borderWeights: [],
+  borderShadows: [],
+  iconSizes: [],
+  brands: [],
+  components: [],
+  typographyVars: [],
+  colorsOther: [],
 };
 
 const categorized = new Set();
@@ -149,7 +149,6 @@ for (const t of tokens) {
   }
 }
 
-// Miscellaneous
 const miscTokens = tokens.filter(t => !categorized.has(t.name));
 
 // ---------- Section renderers ----------
@@ -174,7 +173,7 @@ function renderColorRamps() {
     html += `<div class="ramp-group"><h4>${escHtml(humanize(hue))}</h4><div class="ramp-row">`;
     for (const s of swatches) {
       const tc = textColorForBg(s.value);
-      html += `<div class="swatch" style="background:${escHtml(s.value)};color:${tc}">
+      html += `<div class="swatch" style="background:var(--colors-${escHtml(hue)}-${escHtml(s.step)});color:${tc}">
         <span class="swatch-hex">${escHtml(s.value)}</span>
         <span class="swatch-step">${escHtml(s.step)}</span>
       </div>`;
@@ -197,7 +196,7 @@ function renderAlphaColors() {
   for (const [hue, swatches] of groups) {
     html += `<div class="ramp-group"><h4>${escHtml(humanize(hue))}</h4><div class="ramp-row">`;
     for (const s of swatches) {
-      html += `<div class="swatch alpha-swatch" style="--alpha-color:${escHtml(s.value)}">
+      html += `<div class="swatch alpha-swatch" style="--alpha-color:var(--${escHtml(s.name)})">
         <span class="swatch-hex" style="color:#171717">${escHtml(s.step)}</span>
         <span class="swatch-step" style="color:#171717">alpha</span>
       </div>`;
@@ -255,7 +254,7 @@ function renderGradients() {
   let html = '<div class="gradient-grid">';
   for (const t of categories.gradients) {
     const label = t.name.replace('paint-styles-', '');
-    html += `<div class="gradient-card" style="background:${escHtml(t.value)}">
+    html += `<div class="gradient-card" style="background:var(--${escHtml(t.name)})">
       <span class="gradient-name">${escHtml(humanize(label))}</span>
       <code class="gradient-token">--${escHtml(t.name)}</code>
     </div>`;
@@ -295,13 +294,15 @@ function renderTextStyles() {
   for (const [cat, specs] of catGroups) {
     html += `<div class="type-category"><h4>${escHtml(humanize(cat))}</h4>`;
     for (const spec of specs) {
+      // Use CSS variables for live rendering
+      const varPrefix = `--text-styles-${spec.styleName}`;
       const ff = spec.props['font-family'] || 'Inter';
       const fw = spec.props['font-weight'] || '400';
       const fs = spec.props['font-size'] || '16px';
       const lh = spec.props['line-height'] || '1.5';
       const ls = spec.props['letter-spacing'] || '0px';
       html += `<div class="type-specimen">
-        <div class="type-sample" style="font-family:'${escHtml(ff)}',sans-serif;font-weight:${escHtml(fw)};font-size:${escHtml(fs)};line-height:${escHtml(lh)};letter-spacing:${escHtml(ls)}">
+        <div class="type-sample" style="font-family:var(${varPrefix}-font-family, '${escHtml(ff)}'),sans-serif;font-weight:var(${varPrefix}-font-weight, ${escHtml(fw)});font-size:var(${varPrefix}-font-size, ${escHtml(fs)});line-height:var(${varPrefix}-line-height, ${escHtml(lh)});letter-spacing:var(${varPrefix}-letter-spacing, ${escHtml(ls)})">
           ${escHtml(humanize(spec.styleName))}
         </div>
         <div class="type-meta">
@@ -370,9 +371,9 @@ function renderShadows() {
   let html = '<div class="shadow-grid">';
   for (const t of categories.shadows) {
     const label = t.name.replace('effect-styles-shadow-', '');
-    html += `<div class="shadow-card" style="box-shadow:${escHtml(t.value)}">
+    html += `<div class="shadow-card" style="box-shadow:var(--${escHtml(t.name)})">
       <span class="shadow-label">${escHtml(label.toUpperCase())}</span>
-      <code class="shadow-token">${escHtml(t.value)}</code>
+      <code class="shadow-token">--${escHtml(t.name)}</code>
     </div>`;
   }
   html += '</div>';
@@ -396,7 +397,7 @@ function renderSpacing() {
     const label = t.name.replace('spacing-and-size-spacing-', '');
     html += `<div class="spacing-row">
       <span class="spacing-label">${escHtml(label)}</span>
-      <div class="spacing-bar" style="width:${escHtml(t.value)};min-width:2px"></div>
+      <div class="spacing-bar" style="width:var(--${escHtml(t.name)});min-width:2px"></div>
       <span class="spacing-value">${escHtml(t.value)}</span>
     </div>`;
   }
@@ -425,7 +426,7 @@ function renderSpacing() {
         const shortName = t.name.replace('spacing-and-size-', '');
         html += `<div class="spacing-row">
           <span class="spacing-label">${escHtml(shortName)}</span>
-          <div class="spacing-bar" style="width:${escHtml(t.value)};min-width:2px"></div>
+          <div class="spacing-bar" style="width:var(--${escHtml(t.name)});min-width:2px"></div>
           <span class="spacing-value">${escHtml(t.value)}</span>
         </div>`;
       }
@@ -439,9 +440,8 @@ function renderBorderRadius() {
   let html = '<div class="radius-grid">';
   for (const t of categories.borderRadius) {
     const label = t.name.replace('border-and-radius-radius-', '');
-    const r = t.value === '9999px' ? '50%' : t.value;
     html += `<div class="radius-card">
-      <div class="radius-box" style="border-radius:${escHtml(r)}"></div>
+      <div class="radius-box" style="border-radius:var(--${escHtml(t.name)})"></div>
       <span class="radius-label">${escHtml(label)}</span>
       <span class="radius-value">${escHtml(t.value)}</span>
     </div>`;
@@ -455,7 +455,7 @@ function renderBorderWeights() {
   for (const t of categories.borderWeights) {
     const label = t.name.replace('border-and-radius-border-weight-', '');
     html += `<div class="radius-card">
-      <div class="border-box" style="border-width:${escHtml(t.value)}"></div>
+      <div class="border-box" style="border-width:var(--${escHtml(t.name)})"></div>
       <span class="radius-label">${escHtml(label)}</span>
       <span class="radius-value">${escHtml(t.value)}</span>
     </div>`;
@@ -479,7 +479,7 @@ function renderIconSizes() {
   for (const t of categories.iconSizes) {
     const label = t.name.replace('icon-size-icon-', '');
     html += `<div class="icon-card">
-      <div class="icon-box" style="width:${escHtml(t.value)};height:${escHtml(t.value)}"></div>
+      <div class="icon-box" style="width:var(--${escHtml(t.name)});height:var(--${escHtml(t.name)})"></div>
       <span class="icon-label">${escHtml(label)}</span>
       <span class="icon-value">${escHtml(t.value)}</span>
     </div>`;
@@ -523,7 +523,6 @@ function renderComponents() {
   for (const t of categories.components) {
     const rest = t.name.replace('components-', '');
     const parts = rest.split('-');
-    // Use first word as top-level component group
     const topComp = parts[0];
     if (!groups.has(topComp)) groups.set(topComp, []);
     groups.get(topComp).push(t);
@@ -534,15 +533,15 @@ function renderComponents() {
     html += `<div class="component-group" id="comp-${escHtml(comp)}">
       <h4>${escHtml(humanize(comp))} <span style="font-weight:400;color:#A3A3A3;font-size:13px">(${items.length})</span></h4>`;
 
-    // Live demos for select components
+    // Live demos using CSS custom properties
     if (comp === 'button') {
-      html += renderButtonDemos(items);
+      html += renderButtonDemos();
     } else if (comp === 'badge') {
-      html += renderBadgeDemos(items);
+      html += renderBadgeDemos();
     } else if (comp === 'alert') {
-      html += renderAlertDemos(items);
+      html += renderAlertDemos();
     } else if (comp === 'text' || comp === 'input') {
-      html += renderInputDemos(items);
+      html += renderInputDemos();
     }
 
     // Token grid in collapsible details
@@ -555,75 +554,64 @@ function renderComponents() {
   return html;
 }
 
-function getTokenValue(items, substring) {
-  const t = items.find(t => t.name.includes(substring));
-  return t ? t.value : null;
+// =============================================
+// Component demos using CSS custom properties
+// These render HTML with CSS classes that reference
+// var(--components-...) from tokens.css directly
+// =============================================
+
+function renderButtonDemos() {
+  return `<div class="component-demo">
+    <h5 style="margin:0 0 12px;font-size:13px;font-weight:600;color:#525252;text-transform:uppercase;letter-spacing:0.05em">Variants</h5>
+    <div class="button-row">
+      <button class="btn btn-primary">Primary</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-destructive">Destructive</button>
+      <button class="btn btn-success">Success</button>
+      <button class="btn btn-ghost">Ghost</button>
+      <button class="btn btn-disabled" disabled>Disabled</button>
+    </div>
+  </div>`;
 }
 
-function renderButtonDemos(items) {
-  const variants = ['primary', 'secondary', 'destructive', 'ghost', 'neutral', 'success'];
-  let html = '<div class="demo-row">';
-  for (const variant of variants) {
-    const bg = getTokenValue(items, `button-${variant}-default-color-background`) ||
-               getTokenValue(items, `button-${variant}-color-background`);
-    const fg = getTokenValue(items, `button-${variant}-default-color-label`) ||
-               getTokenValue(items, `button-${variant}-color-label`);
-    const border = getTokenValue(items, `button-${variant}-default-color-border`) ||
-                   getTokenValue(items, `button-${variant}-color-border`);
-    if (bg || fg) {
-      html += `<button class="demo-button" style="
-        background:${bg || 'transparent'};
-        color:${fg || '#171717'};
-        border:1px solid ${border || bg || '#D4D4D4'};
-        padding:8px 16px;border-radius:6px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif;font-size:14px;
-      ">${escHtml(humanize(variant))}</button>`;
-    }
-  }
-  html += '</div>';
-  return html;
+function renderBadgeDemos() {
+  return `<div class="component-demo">
+    <div class="badge-row">
+      <span class="badge badge-success">✓ Success</span>
+      <span class="badge badge-error">✕ Error</span>
+      <span class="badge badge-warning">⚠ Warning</span>
+      <span class="badge badge-info">ℹ Info</span>
+      <span class="badge badge-neutral">● Neutral</span>
+      <span class="badge badge-accent">★ Accent</span>
+    </div>
+  </div>`;
 }
 
-function renderBadgeDemos(items) {
-  let html = '<div class="demo-row">';
-  const bg = getTokenValue(items, 'badge-basic-default-color-background') || '#EEF1FD';
-  const fg = getTokenValue(items, 'badge-basic-default-color-label') || '#2E4DE5';
-  html += `<span class="demo-badge" style="background:${escHtml(bg)};color:${escHtml(fg)}">Badge</span>`;
-
-  const bg2 = getTokenValue(items, 'badge-status-default-color-background') || '#F7F9F8';
-  const fg2 = getTokenValue(items, 'badge-status-default-color-label') || '#29845A';
-  html += `<span class="demo-badge" style="background:${escHtml(bg2)};color:${escHtml(fg2)}">Status</span>`;
-  html += '</div>';
-  return html;
+function renderAlertDemos() {
+  return `<div class="component-demo">
+    <div class="alert alert-error">⛔ Error — Something went wrong. Please try again.</div>
+    <div class="alert alert-warning">⚠️ Warning — This action cannot be undone.</div>
+    <div class="alert alert-success">✅ Success — Your changes have been saved.</div>
+    <div class="alert alert-info">ℹ️ Info — A new version is available.</div>
+  </div>`;
 }
 
-function renderAlertDemos(items) {
-  const types = ['error', 'success', 'warning', 'info'];
-  let html = '<div class="demo-alerts">';
-  for (const type of types) {
-    const bg = getTokenValue(items, `alert-${type}-color-background`) || '#FEF2F2';
-    const fg = getTokenValue(items, `alert-${type}-color-title`) ||
-               getTokenValue(items, `alert-${type}-color-label`) || '#171717';
-    const border = getTokenValue(items, `alert-${type}-color-border`) || '#FECACA';
-    html += `<div class="demo-alert" style="background:${escHtml(bg)};color:${escHtml(fg)};border:1px solid ${escHtml(border)}">
-      ${escHtml(humanize(type))} alert message
-    </div>`;
-  }
-  html += '</div>';
-  return html;
-}
-
-function renderInputDemos(items) {
-  const bg = getTokenValue(items, 'input-default-color-background') ||
-             getTokenValue(items, 'text-input-default-color-background') || '#FFFFFF';
-  const border = getTokenValue(items, 'input-default-color-border') ||
-                 getTokenValue(items, 'text-input-default-color-border') || '#D4D4D4';
-  const fg = getTokenValue(items, 'input-default-color-text') ||
-             getTokenValue(items, 'text-input-default-color-text') || '#171717';
-  return `<div class="demo-row">
-    <input class="demo-input" type="text" placeholder="Placeholder text" style="
-      background:${escHtml(bg)};color:${escHtml(fg)};border:1px solid ${escHtml(border)};
-      padding:8px 12px;border-radius:6px;font-family:Inter,sans-serif;font-size:14px;outline:none;width:240px;
-    " />
+function renderInputDemos() {
+  return `<div class="component-demo">
+    <div class="input-demo">
+      <div>
+        <label class="input-label">Default</label>
+        <input class="input-field" type="text" placeholder="Placeholder text" style="width:100%;margin-top:4px">
+      </div>
+      <div>
+        <label class="input-label">Filled</label>
+        <input class="input-field" type="text" value="Entered value" style="width:100%;margin-top:4px">
+      </div>
+      <div>
+        <label class="input-label">Error</label>
+        <input class="input-field error" type="text" value="Invalid input" style="width:100%;margin-top:4px">
+      </div>
+    </div>
   </div>`;
 }
 
@@ -709,7 +697,6 @@ function renderAllTokens() {
   return html;
 }
 
-// Collect unique top-level categories for filter
 const allCats = [...new Set(tokens.map(t => t.name.split('-')[0]))].sort();
 
 // ---------- sidebar nav ----------
@@ -839,13 +826,13 @@ body { font-family: 'Inter', sans-serif; background: #FAFAFA; color: #171717; -w
 .spacing-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; }
 .spacing-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
 .spacing-label { width: 200px; font-size: 12px; font-weight: 500; color: #525252; text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.spacing-bar { height: 20px; background: #2E4DE5; border-radius: 3px; opacity: 0.7; }
+.spacing-bar { height: 20px; background: #d8dffb; border-radius: 3px; }
 .spacing-value { font-size: 12px; color: #737373; white-space: nowrap; }
 
 /* radius & border */
 .radius-grid { display: flex; gap: 24px; flex-wrap: wrap; }
 .radius-card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.radius-box { width: 64px; height: 64px; background: #2E4DE5; opacity: 0.8; }
+.radius-box { width: 64px; height: 64px; background: #d8dffb; border: 2px solid #2E4DE5; }
 .border-box { width: 64px; height: 64px; background: #FFFFFF; border: solid #2E4DE5; border-radius: 4px; }
 .radius-label { font-size: 12px; font-weight: 600; color: #171717; }
 .radius-value { font-size: 11px; color: #737373; }
@@ -857,17 +844,105 @@ body { font-family: 'Inter', sans-serif; background: #FAFAFA; color: #171717; -w
 .icon-label { font-size: 12px; font-weight: 600; color: #171717; }
 .icon-value { font-size: 11px; color: #737373; }
 
-/* component demos */
-.component-group { margin-bottom: 32px; padding: 20px; background: #FFFFFF; border-radius: 10px; border: 1px solid #E6E6E6; }
+/* ═════════════════════════════════════════════
+   Component Demos — CSS custom property based
+   ═════════════════════════════════════════════ */
+
+.component-group { margin-bottom: 32px; padding: 20px; background: #FFFFFF; border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); }
 .component-group h4 { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #171717; }
-.demo-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
-.demo-button { transition: opacity 0.15s; }
-.demo-button:hover { opacity: 0.85; }
-.demo-badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
-.demo-alerts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.demo-alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; }
-.demo-input { transition: border-color 0.15s; }
-.demo-input:focus { border-color: #2E4DE5 !important; }
+.component-demo { margin-bottom: 16px; }
+
+/* Buttons */
+.button-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px;
+  border-radius: 6px; border: 1px solid transparent; cursor: pointer; transition: opacity 0.15s; }
+.btn:hover { opacity: 0.85; }
+.btn-primary {
+  background: var(--components-button-primary-default-color-background);
+  color: var(--components-button-primary-default-color-text, var(--components-button-primary-default-color-label, #fff));
+  border-color: var(--components-button-primary-default-color-border, transparent);
+}
+.btn-secondary {
+  background: var(--components-button-secondary-default-color-background);
+  color: var(--components-button-secondary-default-color-text, var(--components-button-secondary-default-color-label, #171717));
+  border-color: var(--components-button-secondary-default-color-border, #D4D4D4);
+}
+.btn-destructive {
+  background: var(--components-button-destructive-default-color-background);
+  color: var(--components-button-destructive-default-color-text, var(--components-button-destructive-default-color-label, #fff));
+  border-color: var(--components-button-destructive-default-color-border, transparent);
+}
+.btn-success {
+  background: var(--components-button-success-default-color-background, #29845A);
+  color: var(--components-button-success-default-color-text, var(--components-button-success-default-color-label, #fff));
+  border-color: var(--components-button-success-default-color-border, transparent);
+}
+.btn-ghost {
+  background: var(--components-button-ghost-default-color-background, transparent);
+  color: var(--components-button-ghost-default-color-text, var(--components-button-ghost-default-color-label, #2E4DE5));
+  border-color: var(--components-button-ghost-default-color-border, transparent);
+}
+.btn-disabled {
+  background: var(--components-button-primary-disabled-color-background, #E6E6E6);
+  color: var(--components-button-primary-disabled-color-text, var(--components-button-primary-disabled-color-label, #A3A3A3));
+  border-color: var(--components-button-primary-disabled-color-border, transparent);
+  cursor: not-allowed; opacity: 0.7;
+}
+
+/* Badges */
+.badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: var(--components-badge-status-small-sizing-height, 24px);
+  padding: 0 var(--components-badge-status-small-spacing-padding, 8px);
+  border-radius: var(--components-badge-status-default-border-radius, 9999px);
+  font-size: var(--components-badge-status-small-typography-font-size, 12px);
+  font-weight: var(--components-badge-status-small-typography-font-weight, 500);
+  line-height: var(--components-badge-status-small-typography-line-height, 1.33);
+  font-family: 'Inter', sans-serif;
+}
+.badge-success { background: var(--components-badge-status-success-color-background); color: var(--components-badge-status-success-color-text, var(--components-badge-status-success-color-label)); }
+.badge-error { background: var(--components-badge-status-error-color-background); color: var(--components-badge-status-error-color-text, var(--components-badge-status-error-color-label)); }
+.badge-warning { background: var(--components-badge-status-warning-color-background); color: var(--components-badge-status-warning-color-text, var(--components-badge-status-warning-color-label)); }
+.badge-info { background: var(--components-badge-status-info-color-background); color: var(--components-badge-status-info-color-text, var(--components-badge-status-info-color-label)); }
+.badge-neutral { background: var(--components-badge-status-neutral-color-background); color: var(--components-badge-status-neutral-color-text, var(--components-badge-status-neutral-color-label)); }
+.badge-accent { background: var(--components-badge-status-accent-weak-color-background, var(--components-badge-status-accent-color-background)); color: var(--components-badge-status-accent-weak-color-text, var(--components-badge-status-accent-color-label)); }
+
+/* Alerts */
+.alert {
+  padding: var(--components-alert-toast-default-spacing-padding, 12px 16px);
+  border-radius: var(--components-alert-default-default-border-radius, 6px);
+  border: var(--components-alert-default-default-border-width, 1px) solid;
+  font-size: 14px; margin-bottom: 8px; font-weight: 500;
+}
+.alert-error { background: var(--components-alert-error-light-color-background); border-color: var(--components-alert-error-default-color-border); }
+.alert-warning { background: var(--components-alert-warning-light-color-background); border-color: var(--components-alert-warning-default-color-border); }
+.alert-success { background: var(--components-alert-success-light-color-background); border-color: var(--components-alert-success-default-color-border); }
+.alert-info { background: var(--components-alert-info-light-color-background); border-color: var(--components-alert-info-default-color-border); }
+
+/* Inputs */
+.input-demo { display: flex; flex-direction: column; gap: 12px; max-width: 360px; }
+.input-field {
+  font-family: 'Inter', sans-serif;
+  font-size: var(--components-text-input-default-default-typography-font-size, 14px);
+  line-height: var(--components-text-input-default-default-typography-line-height, 1.5);
+  padding: var(--components-text-input-default-default-spacing-padding, 8px 12px);
+  border: var(--components-text-input-default-default-border-width, 1px) solid var(--components-text-input-default-default-color-border, #D4D4D4);
+  border-radius: var(--components-text-input-default-default-border-radius, 6px);
+  background: var(--components-text-input-default-default-color-background, #fff);
+  color: var(--components-text-input-default-filled-color-text, var(--components-text-input-default-default-color-text, #171717));
+  outline: none;
+}
+.input-field::placeholder { color: var(--components-text-input-default-default-color-placeholder, #A3A3A3); }
+.input-field:focus { border-color: var(--components-text-input-default-active-color-border, #2E4DE5); }
+.input-field.error { border-color: var(--components-text-input-default-error-color-border, #DC2626); }
+.input-label {
+  font-size: var(--components-label-default-default-typography-font-size, 14px);
+  line-height: var(--components-label-default-default-typography-line-height, 1.5);
+  color: var(--components-label-default-default-color-text, #171717);
+  font-weight: 500;
+}
+
 .comp-details { margin-top: 8px; }
 .comp-details summary { font-size: 12px; font-weight: 500; color: #737373; cursor: pointer; padding: 4px 0; }
 .comp-details summary:hover { color: #171717; }
@@ -921,7 +996,7 @@ ${sidebarHtml}
 <main class="main-ds" id="view-ds">
   <div class="hero">
     <h1>Unity Design System</h1>
-    <p>${totalCount} design tokens across colors, typography, spacing, effects, and components.</p>
+    <p>Visual style guide — ${totalCount} design tokens exported from Figma, powered by CSS custom properties.</p>
   </div>
 
   <div class="section" id="color-ramps">
